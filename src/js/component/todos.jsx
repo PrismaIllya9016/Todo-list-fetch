@@ -1,18 +1,60 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 export const Todo = () => {
-  //planteamientos:
-  //1) Pensar en una estructura de datos adecuada: Arreglos
-
-  //["tarea1" , "lavar los platos", "sacar la basura"]
-  //Sabemos que podemos agregar con el método .push()
-
-  //Podemos recorrer los arreglos con For, .map((item, index)=>{return()})
-
-  //Podemos remover .filter((item, index)=>{return (index != 2)})
-
   const [listTodos, setListTodos] = useState([]);
   const [todo, setTodo] = useState("");
+  const [usuario, setUsuario] = useState("");
+
+  const BASE_URL = "https://assets.breatheco.de/apis/fake/todos/";
+
+  const crearUsuario = async () => {
+    let URI = `${BASE_URL}user/${usuario}`;
+    
+    try {
+      let respuesta = await fetch(URI, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify([]),
+      });
+      console.log(respuesta);
+      if (respuesta.ok) {
+        alert("Usuario creado correctamente");
+        return;
+      } else {
+        alert("Error al crear usuario, o el usuario ya existe");
+        
+      }
+      let respuestaJSON = await respuesta.json();
+      console.log(respuestaJSON)
+
+    } catch {
+      (e) => console.log(e);
+    }
+  };
+
+  const traerListaTareas = async() => {
+    let URI = `${BASE_URL}user/${usuario}`;
+    try{
+      let respuesta = await fetch(URI)
+      if(respuesta.ok){
+        let respuestaJSON = await respuesta.json()
+        console.log(respuestaJSON)
+        console.log(listTodos)
+        setListTodos(respuestaJSON)
+        console.log(listTodos)
+      }else{
+        console.log("respuesta fallida")
+        setListTodos([])
+      }
+    }
+    catch{err=>console.log(err)}
+  }
+
+  useEffect(()=>{
+    traerListaTareas()
+  },[usuario])
+
+ 
 
   const deleteTodo = (indiceTarea) => {
     setListTodos((prevState) => {
@@ -34,6 +76,19 @@ export const Todo = () => {
     <div className="card">
       <input
         type="text"
+        placeholder="Nombre de usuario"
+        onKeyUp={(e) => {
+          if (e.keyCode == "13") {
+            setUsuario(e.target.value)
+          }
+        }}
+      />
+      <button type="button" onClick={() => crearUsuario()}>
+        Crear Usuario
+      </button>
+      {/* <button type="button" onClick={()=>traerListaTareas()}>Traer las tareas</button> */}
+      <input
+        type="text"
         placeholder="escribe una tarea nueva"
         onKeyUp={(e) => {
           if (e.keyCode == "13") {
@@ -45,14 +100,14 @@ export const Todo = () => {
         }}
       />
       <ul>
-        {listTodos.map((item, indice) => {
+        {listTodos.length>0 && listTodos && listTodos!=undefined? listTodos.map((item, indice) => {
           return (
             <li
               className="list-group-item d-flex justify-content-between"
               key={indice}
             >
-              {item}
-              {indice}
+              {item.label}
+              <span>{JSON.stringify(item.done)}</span>
               <button
                 type="button"
                 className="btn btn-light"
@@ -60,11 +115,11 @@ export const Todo = () => {
                   deleteTodo(indice);
                 }}
               >
-                Eliminar {item}
+                Eliminar
               </button>
             </li>
           );
-        })}
+        }):<>No Hay tareas</>}
       </ul>
     </div>
   );
