@@ -2,13 +2,18 @@ import React, { useState, useEffect } from "react";
 
 export const Todo = () => {
   const [listTodos, setListTodos] = useState([]);
-  const [todo, setTodo] = useState("");
   const [usuario, setUsuario] = useState("");
 
   const BASE_URL = "https://assets.breatheco.de/apis/fake/todos/";
 
-  const crearUsuario = async () => {
-    let URI = `${BASE_URL}user/${usuario}`;
+  const crearUsuario = async (e) => {
+    e.preventDefault();
+    let data = new FormData(e.target);
+    let username = data.get("username");
+    console.log("la variable username es: ", username);
+    setUsuario(username);
+
+    let URI = `${BASE_URL}user/${username}`;
 
     try {
       let respuesta = await fetch(URI, {
@@ -22,6 +27,7 @@ export const Todo = () => {
         return;
       } else {
         alert("Error al crear usuario, o el usuario ya existe");
+        setUsuario(username);
       }
       let respuestaJSON = await respuesta.json();
       console.log(respuestaJSON);
@@ -74,7 +80,7 @@ export const Todo = () => {
       } catch {
         (e) => console.log(e);
       }
-    }else{
+    } else {
       let respuesta = await fetch(URI, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
@@ -103,30 +109,51 @@ export const Todo = () => {
     });
   };
 
+  const agregarTodo = async (e) => {
+    let arrAux = listTodos.slice();
+    arrAux.push({
+      label: e,
+      done: false,
+    });
+    setListTodos(arrAux);
+    console.log(usuario, e, arrAux);
+    let URI = `${BASE_URL}user/${usuario}`;
+
+    let respuesta = await fetch(URI, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(arrAux),
+    });
+
+    if (respuesta.ok) {
+      console.log("Se agregó exitósamente la tarea");
+     
+      traerListaTareas();
+    } else {
+      console.log("error al agregar tarea");
+    }
+  };
+
   return (
     <div className="card">
-      <input
-        type="text"
-        placeholder="Nombre de usuario"
-        onKeyUp={(e) => {
-          if (e.keyCode == "13") {
-            setUsuario(e.target.value);
-          }
+      <form
+        onSubmit={(e) => {
+          crearUsuario(e);
         }}
-      />
-      <button type="button" onClick={() => crearUsuario()}>
-        Crear Usuario
-      </button>
+      >
+        <input type="text" placeholder="Nombre de usuario" name="username" />
+        <button type="submit">Crear Usuario</button>
+      </form>
+
       {/* <button type="button" onClick={()=>traerListaTareas()}>Traer las tareas</button> */}
       <input
         type="text"
         placeholder="escribe una tarea nueva"
         onKeyUp={(e) => {
           if (e.keyCode == "13") {
-            let arrAux = listTodos.slice();
-            arrAux.push(e.target.value);
-            setListTodos(arrAux);
-            e.target.value = "";
+            console.log(e.target.value);
+            agregarTodo(e.target.value);
+            /*  e.target.value = ""; */
           }
         }}
       />
